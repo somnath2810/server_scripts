@@ -217,6 +217,12 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         """Handle HEAD requests."""
         self.send_response(200)
         self.end_headers()
+    
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b"Server is running!")
 
     def do_POST(self):
         """Handle POST requests."""
