@@ -1,0 +1,1 @@
+web: python send_image.py
