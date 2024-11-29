@@ -154,9 +154,14 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'{"status":"error", "message":"No image data received"}')
 
 def run_server():
-    server_address = ('', 5001)  # Running on localhost:5000
+    # server_address = ('', 5001)  # Running on localhost:5000
+    # httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
+    # print("Server started at http://localhost:5001")
+    # httpd.serve_forever()
+    PORT = int(os.getenv('PORT', 5000))  # Default to 5000 if PORT is not set
+    server_address = ('', PORT)
     httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
-    print("Server started at http://localhost:5001")
+    print(f"Server started at http://localhost:{PORT}")
     httpd.serve_forever()
 
 if __name__ == "__main__":
