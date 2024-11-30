@@ -53,6 +53,10 @@ def check_email_for_description():
 
     return description
 
+@app.route('/')
+def home():
+    return "Receiver Service is Running!"
+
 @app.route('/get-description', methods=['GET'])
 def get_description():
     description = check_email_for_description()
