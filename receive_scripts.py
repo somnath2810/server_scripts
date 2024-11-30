@@ -122,6 +122,7 @@ def check_email_for_attachment():
 @app.route('/get-image', methods=['GET'])
 def get_image():
     image_path = check_email_for_attachment()
+    print("Image Path: ", image_path)
     if image_path and os.path.exists(image_path):
         return send_file(image_path, mimetype='image/jpeg')  # Serve image
     else:
