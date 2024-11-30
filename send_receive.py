@@ -29,22 +29,45 @@ if not os.path.exists(SAVE_DIR):
 
 # Utility function to send email
 def send_email(subject, body, to_email, from_email, password, image_path=None):
-    msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = from_email
-    msg['To'] = to_email
-    msg.set_content(body)
+    # msg = EmailMessage()
+    # msg['Subject'] = subject
+    # msg['From'] = from_email
+    # msg['To'] = to_email
+    # msg.set_content(body)
 
-    if image_path:
-        with open(image_path, 'rb') as img_file:
-            img_data = img_file.read()
-            img_name = os.path.basename(image_path)
-            msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+    # if image_path:
+    #     with open(image_path, 'rb') as img_file:
+    #         img_data = img_file.read()
+    #         img_name = os.path.basename(image_path)
+    #         msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
 
-    with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as smtp:
-        smtp.login(from_email, password)
-        smtp.send_message(msg)
-    print("Email sent successfully.")
+    # with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as smtp:
+    #     smtp.login(from_email, password)
+    #     smtp.send_message(msg)
+    # print("Email sent successfully.")
+    try:
+        print("Preparing email...")
+        msg = EmailMessage()
+        msg['Subject'] = subject
+        msg['From'] = from_email
+        msg['To'] = to_email
+        msg.set_content(body)
+
+        if image_path:
+            print(f"Attaching file: {image_path}")
+            with open(image_path, 'rb') as img_file:
+                img_data = img_file.read()
+                img_name = os.path.basename(image_path)
+                msg.add_attachment(img_data, maintype='image', subtype='jpeg', filename=img_name)
+
+        print(f"Connecting to SMTP server: {SMTP_SERVER}:{SMTP_PORT}")
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as smtp:
+            smtp.login(from_email, password)
+            print("Logged in to SMTP server.")
+            smtp.send_message(msg)
+            print("Email sent successfully.")
+    except Exception as e:
+        print(f"Error sending email: {e}")
 
 # Handle receiving data and sending emails
 @app.route('/send-email', methods=['POST'])
@@ -182,5 +205,5 @@ def health_check():
 # Start the Flask server
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))  # Use Render.com assigned port
-    atexit.register(cleanup_images)
+    # atexit.register(cleanup_images)
     app.run(host="0.0.0.0", port=port)
