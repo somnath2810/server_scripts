@@ -138,5 +138,5 @@ def cleanup_images():
         print(f"Error during cleanup: {e}")
 
 if __name__ == "__main__":
-    atexit.register(cleanup_images)
+    # atexit.register(cleanup_images)
     app.run(host="0.0.0.0", port=5002)  # Run on a different port for receiving service
