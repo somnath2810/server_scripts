@@ -13,10 +13,22 @@ IMAP_SERVER = 'imap.gmail.com'
 IMAP_PORT = 993
 EMAIL = "sendermail432@gmail.com"
 PASSWORD = "wlgy xizw duca zphi"
-SAVE_DIR = "received_images"
+# SAVE_DIR = "received_images"
 
-if not os.path.exists(SAVE_DIR):
-    os.makedirs(SAVE_DIR)
+# Set the directory for saving attachments
+if os.getenv("RENDER"):
+    # Use /tmp on Render for temporary files
+    SAVE_DIR = "/tmp/received_images"
+else:
+    # Use a local directory for development
+    SAVE_DIR = "received_images"
+
+# Ensure the directory exists
+os.makedirs(SAVE_DIR, exist_ok=True)
+print(f"SAVE_DIR is set to: {SAVE_DIR}")
+
+# if not os.path.exists(SAVE_DIR):
+#     os.makedirs(SAVE_DIR)
 
 # Utility function to check email for descriptions
 def check_email_for_description():
