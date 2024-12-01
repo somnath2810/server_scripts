@@ -13,8 +13,8 @@ CORS(app)
 # IMAP configuration
 IMAP_SERVER = 'imap.gmail.com'
 IMAP_PORT = 993
-EMAIL = os.getenv("EMAIL")  # Use environment variable for email
-PASSWORD = os.getenv("PASSWORD")  # Use environment variable for password
+EMAIL = "sendermail432@gmail.com"
+PASSWORD = "wlgy xizw duca zphi"
 SAVE_DIR = "generated image"
 
 if not os.path.exists(SAVE_DIR):
@@ -88,18 +88,15 @@ def check_email_for_attachment():
     return image_path
 
 
-@app.route('/get-image', methods=['GET', 'HEAD'])
+@app.route('/get-image', methods=['GET'])
 def get_image():
     global LAST_IMAGE_PATH
     image_path = check_email_for_attachment()  # Get image from email
 
-    # Ensure that the image exists before serving it
     if image_path and os.path.exists(image_path):
-        LAST_IMAGE_PATH = image_path  # Update the cached image path
-        if request.method == 'HEAD':
-            # For HEAD requests, just check if the file exists and return status
-            return '', 200  # Respond with 200 OK and no body (HEAD request)
-        return send_file(image_path, mimetype='image/jpeg')  # Serve image for GET request
+        # Update the cached image path to the new image
+        LAST_IMAGE_PATH = image_path
+        return send_file(image_path, mimetype='image/jpeg')  # Serve image
     else:
         return jsonify({"message": "No new images found"}), 404
 
