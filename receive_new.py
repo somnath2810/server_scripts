@@ -213,6 +213,16 @@ def get_description():
 
 #     return latest_image_path
 
+def delete_old_images():
+    try:
+        for filename in os.listdir(SAVE_DIR):
+            file_path = os.path.join(SAVE_DIR, filename)
+            if os.path.isfile(file_path) and file_path.endswith(('.png', '.jpg', '.jpeg')):  # Only delete image files
+                os.remove(file_path)
+                print(f"Removed old image: {file_path}")
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+
 def check_email_for_attachment():
     image_path = None
     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
@@ -267,25 +277,6 @@ def check_email_for_attachment():
     return image_path
 
 
-@app.route('/get-latest-image', methods=['GET'])
-def get_latest_image():
-    try:
-        # List all images in the directory
-        images = [f for f in os.listdir(SAVE_DIR) if f.endswith(('.jpg', '.jpeg', '.png'))]
-        
-        # Sort by modified time and get the latest image
-        if images:
-            images.sort(key=lambda x: os.path.getmtime(os.path.join(SAVE_DIR, x)), reverse=True)
-            latest_image = images[0]
-            latest_image_path = os.path.join(SAVE_DIR, latest_image)
-            return send_file(latest_image_path, mimetype='image/jpeg')  # Serve the latest image
-        else:
-            return jsonify({"message": "No images available"}), 404
-    except Exception as e:
-        print(f"Error retrieving latest image: {e}")
-        return jsonify({"message": "Error retrieving latest image"}), 500
-
-
 @app.route('/get-image', methods=['GET'])
 def get_image():
     global LAST_IMAGE_PATH
@@ -302,31 +293,7 @@ def get_image():
 # Update the cached image path when necessary
 def get_last_image():
     return LAST_IMAGE_PATH
-
-@app.route('/list-images', methods=['GET'])
-def list_images():
-    try:
-        files = os.listdir(SAVE_DIR)  # List files in /tmp/received_images
-        return jsonify({"images": files})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/get-image/<filename>', methods=['GET'])
-def serve_image(filename):
-    try:
-        return send_file(os.path.join(SAVE_DIR, filename), mimetype='image/jpeg')
-    except FileNotFoundError:
-        return jsonify({"error": "File not found"}), 404
-
-def cleanup_images():
-    try:
-        for filename in os.listdir(SAVE_DIR):
-            file_path = os.path.join(SAVE_DIR, filename)
-            if os.path.isfile(file_path) and file_path.endswith(('.png', '.jpg', '.jpeg')):
-                os.remove(file_path)
-    except Exception as e:
-        print(f"Error during cleanup: {e}")
-
+    
 if __name__ == "__main__":
     # atexit.register(cleanup_images)
     app.run(host="0.0.0.0", port=5002)  # Run on a different port for receiving service
