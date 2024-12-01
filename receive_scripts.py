@@ -122,8 +122,9 @@ def get_description():
 
 #     return image_path
 
+
 def check_email_for_attachment():
-    image_path = os.path.join(SAVE_DIR, "image.jpg")  # Always save as image.jpg
+    latest_image_path = None
     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
         mail.login(EMAIL, PASSWORD)
         mail.select("inbox")
@@ -144,18 +145,43 @@ def check_email_for_attachment():
                                 content_disposition = str(part.get("Content-Disposition"))
 
                                 if "attachment" in content_disposition and "image" in content_type:
-                                    with open(image_path, "wb") as f:
+                                    filename = f"image_{int(time.time())}.jpg"  # Unique filename with timestamp
+                                    latest_image_path = os.path.join(SAVE_DIR, filename)
+                                    with open(latest_image_path, "wb") as f:
                                         f.write(part.get_payload(decode=True))
+
                         else:
                             content_type = msg.get_content_type()
                             if "image" in content_type:
-                                with open(image_path, "wb") as f:
+                                filename = f"image_{int(time.time())}.jpg"
+                                latest_image_path = os.path.join(SAVE_DIR, filename)
+                                with open(latest_image_path, "wb") as f:
                                     f.write(msg.get_payload(decode=True))
 
                 mail.store(mail_id, '+FLAGS', '\\Seen')  # Mark as read
                 break  # Process only the first unseen email
 
-    return image_path if os.path.exists(image_path) else None
+    return latest_image_path
+
+
+@app.route('/get-latest-image', methods=['GET'])
+def get_latest_image():
+    try:
+        # List all images in the directory
+        images = [f for f in os.listdir(SAVE_DIR) if f.endswith(('.jpg', '.jpeg', '.png'))]
+        
+        # Sort by modified time and get the latest image
+        if images:
+            images.sort(key=lambda x: os.path.getmtime(os.path.join(SAVE_DIR, x)), reverse=True)
+            latest_image = images[0]
+            latest_image_path = os.path.join(SAVE_DIR, latest_image)
+            return send_file(latest_image_path, mimetype='image/jpeg')  # Serve the latest image
+        else:
+            return jsonify({"message": "No images available"}), 404
+    except Exception as e:
+        print(f"Error retrieving latest image: {e}")
+        return jsonify({"message": "Error retrieving latest image"}), 500
+
 
 
 @app.route('/get-image', methods=['GET'])
