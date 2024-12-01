@@ -92,6 +92,7 @@ EMAIL = "sendermail432@gmail.com"
 PASSWORD = "wlgy xizw duca zphi"
 # SAVE_DIR = "descriptions"
 SAVE_DIR = "generated image"
+LAST_IMAGE_PATH = None  # Global variable to cache the last image path
 
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
@@ -197,6 +198,35 @@ def check_email_for_attachment():
     print("Image saved at:", image_path)
     return image_path
 
+# def check_email_for_attachment():
+#     image_path = None
+#     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
+#         mail.login(EMAIL, PASSWORD)
+#         mail.select("inbox")
+#         status, messages = mail.search(None, 'UNSEEN')
+
+#         for mail_id in messages:
+#             if mail_id:
+#                 status, msg_data = mail.fetch(mail_id, "(RFC822)")
+#                 for response_part in msg_data:
+#                     if isinstance(response_part, tuple):
+#                         msg = email.message_from_bytes(response_part[1])
+#                         if msg.is_multipart():
+#                             for part in msg.walk():
+#                                 content_type = part.get_content_type()
+#                                 content_disposition = str(part.get("Content-Disposition"))
+#                                 if "attachment" in content_disposition and "image" in content_type:
+#                                     filename = f"image_{int(time.time())}.jpg"  # Unique filename
+#                                     image_path = os.path.join(SAVE_DIR, filename)
+#                                     with open(image_path, "wb") as f:
+#                                         f.write(part.get_payload(decode=True))
+#                                     print(f"Image saved: {image_path}")
+#                         else:
+#                             print("No valid attachment found.")
+#                 mail.store(mail_id, '+FLAGS', '\\Seen')
+#     return image_path
+
+
 
 def cleanup_images():
     try:
@@ -210,23 +240,49 @@ def cleanup_images():
 
 
 @app.route('/get-image', methods=['GET'])
-def get_image():
-    # image_path = check_email_for_attachment()  # Get image from email
-    check_email_for_attachment()
-    file_name = "generated_image.png"
-    image_path = os.path.join(SAVE_DIR, file_name)
+# def get_image():
+#     global LAST_IMAGE_PATH
+#     image_path = check_email_for_attachment()  # Get image from email
+#     # check_email_for_attachment()
+#     # file_name = "generated_image.png"
+#     # image_path = os.path.join(SAVE_DIR, file_name)
 
-    if image_path and os.path.exists(image_path):
-        return send_file(image_path, mimetype='image/jpeg')  # Serve image
-    else:
-        return jsonify({"message": "No new images found"}), 404
+#     if image_path and os.path.exists(image_path):
+#         return send_file(image_path, mimetype='image/jpeg')  # Serve image
+#     else:
+#         return jsonify({"message": "No new images found"}), 404
+
+
+@app.route('/get-image', methods=['GET'])
+def get_image():
+    global LAST_IMAGE_PATH
+
+    try:
+        print("Checking for new images...")
+        image_path = check_email_for_attachment()
+
+        if image_path and os.path.exists(image_path):
+            LAST_IMAGE_PATH = image_path  # Update the cache
+            print(f"Serving new image: {image_path}")
+            return send_file(image_path, mimetype='image/jpeg')
+        elif LAST_IMAGE_PATH and os.path.exists(LAST_IMAGE_PATH):
+            print(f"Serving cached image: {LAST_IMAGE_PATH}")
+            return send_file(LAST_IMAGE_PATH, mimetype='image/jpeg')
+        else:
+            print("No images found.")
+            return jsonify({"message": "No new images found"}), 404
+    except Exception as e:
+        print(f"Error in /get-image: {e}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+
 
 
 if __name__ == "__main__":
     if not os.path.exists(SAVE_DIR):
         os.makedirs(SAVE_DIR)
     app.run(port=5000)
-    atexit.register(cleanup_images)
+    # atexit.register(cleanup_images)
  
 
 # if __name__ == "__main__":
