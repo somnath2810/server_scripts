@@ -78,10 +78,52 @@ def get_description():
     else:
         return jsonify({"description": ""})
 
-# Utility function to check email for image attachments
+# # Utility function to check email for image attachments
+# def check_email_for_attachment():
+#     logging.info("Checking email for attachments...")
+#     # image_path = None
+#     image_path = os.path.join(SAVE_DIR, "image.jpg")
+#     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
+#         mail.login(EMAIL, PASSWORD)
+#         mail.select("inbox")
+
+#         status, messages = mail.search(None, 'UNSEEN')  # Get unseen emails
+#         messages = messages[0].split(b' ')
+
+#         for mail_id in messages:
+#             if mail_id:
+#                 status, msg_data = mail.fetch(mail_id, "(RFC822)")
+#                 for response_part in msg_data:
+#                     if isinstance(response_part, tuple):
+#                         msg = email.message_from_bytes(response_part[1])
+
+#                         if msg.is_multipart():
+#                             for part in msg.walk():
+#                                 content_type = part.get_content_type()
+#                                 content_disposition = str(part.get("Content-Disposition"))
+
+#                                 if "attachment" in content_disposition and "image" in content_type:
+#                                     filename = part.get_filename()
+#                                     if filename:
+#                                         image_path = os.path.join(SAVE_DIR, filename)
+#                                         with open(image_path, "wb") as f:
+#                                             f.write(part.get_payload(decode=True))
+
+#                         else:
+#                             content_type = msg.get_content_type()
+#                             if "image" in content_type:
+#                                 filename = "generated_image.jpg"
+#                                 image_path = os.path.join(SAVE_DIR, filename)
+#                                 with open(image_path, "wb") as f:
+#                                     f.write(msg.get_payload(decode=True))
+
+#                 mail.store(mail_id, '+FLAGS', '\\Seen')  # Mark as read
+#                 break  # Process only the first unseen email
+
+#     return image_path
+
 def check_email_for_attachment():
-    logging.info("Checking email for attachments...")
-    image_path = None
+    image_path = os.path.join(SAVE_DIR, "image.jpg")  # Always save as image.jpg
     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
         mail.login(EMAIL, PASSWORD)
         mail.select("inbox")
@@ -102,24 +144,19 @@ def check_email_for_attachment():
                                 content_disposition = str(part.get("Content-Disposition"))
 
                                 if "attachment" in content_disposition and "image" in content_type:
-                                    filename = part.get_filename()
-                                    if filename:
-                                        image_path = os.path.join(SAVE_DIR, filename)
-                                        with open(image_path, "wb") as f:
-                                            f.write(part.get_payload(decode=True))
-
+                                    with open(image_path, "wb") as f:
+                                        f.write(part.get_payload(decode=True))
                         else:
                             content_type = msg.get_content_type()
                             if "image" in content_type:
-                                filename = "generated_image.jpg"
-                                image_path = os.path.join(SAVE_DIR, filename)
                                 with open(image_path, "wb") as f:
                                     f.write(msg.get_payload(decode=True))
 
                 mail.store(mail_id, '+FLAGS', '\\Seen')  # Mark as read
                 break  # Process only the first unseen email
 
-    return image_path
+    return image_path if os.path.exists(image_path) else None
+
 
 @app.route('/get-image', methods=['GET'])
 def get_image():
