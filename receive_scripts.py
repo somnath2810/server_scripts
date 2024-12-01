@@ -79,6 +79,7 @@ def get_description():
 
 # Utility function to check email for image attachments
 def check_email_for_attachment():
+    logging.info("Checking email for attachments...")
     image_path = None
     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
         mail.login(EMAIL, PASSWORD)
@@ -127,6 +128,21 @@ def get_image():
         return send_file(image_path, mimetype='image/jpeg')  # Serve image
     else:
         return jsonify({"message": "No new images found"}), 404
+
+@app.route('/list-images', methods=['GET'])
+def list_images():
+    try:
+        files = os.listdir(SAVE_DIR)  # List files in /tmp/received_images
+        return jsonify({"images": files})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/get-image/<filename>', methods=['GET'])
+def serve_image(filename):
+    try:
+        return send_file(os.path.join(SAVE_DIR, filename), mimetype='image/jpeg')
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
 
 def cleanup_images():
     try:
