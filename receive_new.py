@@ -88,6 +88,11 @@ def check_email_for_attachment():
 
     print("Image saved at:", image_path)
     return image_path
+    
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"message": "Flask app is running"}), 200
 
 
 @app.route('/get-image', methods=['GET', 'HEAD'])
