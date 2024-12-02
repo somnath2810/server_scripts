@@ -134,9 +134,8 @@ def home():
 def get_image():
     """Endpoint to serve the latest image."""
     global LAST_IMAGE_PATH
-
     # Ensure a new email check
-   image_path = check_email_for_attachment()
+    image_path = check_email_for_attachment()
 
     # Serve the last cached image
     # if LAST_IMAGE_PATH and os.path.exists(LAST_IMAGE_PATH):
