@@ -1,41 +1,43 @@
 import os
 import imaplib
 import email
-from email.header import decode_header
-from flask import Flask, jsonify, send_file
+from flask import Flask, jsonify, send_file, request
 from flask_cors import CORS
-import atexit
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# IMAP configuration
+# IMAP configuration (use environment variables for deployment)
 IMAP_SERVER = 'imap.gmail.com'
 IMAP_PORT = 993
-EMAIL = os.getenv("EMAIL")  # Use environment variable for email
-PASSWORD = os.getenv("PASSWORD")  # Use environment variable for password
-SAVE_DIR = "generated image"
+EMAIL = os.getenv("EMAIL")  # Email address
+PASSWORD = os.getenv("PASSWORD")  # Email password
 
+# Directory to save images (on the Render server)
+SAVE_DIR = "/tmp/generated_image"  # Use /tmp for ephemeral storage on Render
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
 # Global variable to cache the last image path
 LAST_IMAGE_PATH = None
 
-# Function to delete old images from the directory
 def delete_old_images():
+    """Delete all old images in the directory."""
     try:
         for filename in os.listdir(SAVE_DIR):
             file_path = os.path.join(SAVE_DIR, filename)
-            if os.path.isfile(file_path) and file_path.endswith(('.png', '.jpg', '.jpeg')):  # Only delete image files
+            if os.path.isfile(file_path) and file_path.endswith(('.png', '.jpg', '.jpeg')):
                 os.remove(file_path)
                 print(f"Removed old image: {file_path}")
     except Exception as e:
         print(f"Error during cleanup: {e}")
 
 def check_email_for_attachment():
+    """Check for new emails and save attachments."""
+    global LAST_IMAGE_PATH
     image_path = None
+
     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
         mail.login(EMAIL, PASSWORD)
         mail.select("inbox")
@@ -62,12 +64,12 @@ def check_email_for_attachment():
                                 if "attachment" in content_disposition and "image" in content_type:
                                     filename = part.get_filename()
                                     if filename:
-                                        # Delete old image before saving the new one
-                                        delete_old_images()
+                                        delete_old_images()  # Delete old images
 
                                         image_path = os.path.join(SAVE_DIR, filename)
                                         with open(image_path, "wb") as f:
                                             f.write(part.get_payload(decode=True))
+                                        LAST_IMAGE_PATH = image_path
 
                         else:
                             content_type = msg.get_content_type()
@@ -75,11 +77,11 @@ def check_email_for_attachment():
                                 filename = "generated_image.jpg"
                                 image_path = os.path.join(SAVE_DIR, filename)
 
-                                # Delete old image before saving the new one
-                                delete_old_images()
+                                delete_old_images()  # Delete old images
 
                                 with open(image_path, "wb") as f:
                                     f.write(msg.get_payload(decode=True))
+                                LAST_IMAGE_PATH = image_path
 
                 mail.store(mail_id, '+FLAGS', '\\Seen')  # Mark as read
                 break  # Process only the first unseen email
@@ -90,25 +92,21 @@ def check_email_for_attachment():
 
 @app.route('/get-image', methods=['GET', 'HEAD'])
 def get_image():
+    """Endpoint to serve the latest image."""
     global LAST_IMAGE_PATH
-    image_path = check_email_for_attachment()  # Get image from email
 
-    # Ensure that the image exists before serving it
-    if image_path and os.path.exists(image_path):
-        LAST_IMAGE_PATH = image_path  # Update the cached image path
+    # Ensure a new email check
+    check_email_for_attachment()
+
+    # Serve the last cached image
+    if LAST_IMAGE_PATH and os.path.exists(LAST_IMAGE_PATH):
         if request.method == 'HEAD':
-            # For HEAD requests, just check if the file exists and return status
-            return '', 200  # Respond with 200 OK and no body (HEAD request)
-        return send_file(image_path, mimetype='image/jpeg')  # Serve image for GET request
+            # For HEAD requests, only return 200 OK with no body
+            return '', 200
+        return send_file(LAST_IMAGE_PATH, mimetype='image/jpeg')
     else:
         return jsonify({"message": "No new images found"}), 404
 
 
-# Update the cached image path when necessary
-def get_last_image():
-    return LAST_IMAGE_PATH
-
-
 if __name__ == "__main__":
-    app.run(port=5000)
-    atexit.register(lambda: delete_old_images())  # Cleanup old images on exit
+    app.run(host="0.0.0.0", port=5000)
