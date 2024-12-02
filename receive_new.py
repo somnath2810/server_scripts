@@ -262,18 +262,35 @@ def home():
     return jsonify({"message": "Flask app is running"}), 200
 
 
-@app.route('/get-image', methods=['GET', 'HEAD'])
+# @app.route('/get-image', methods=['GET', 'HEAD'])
+# def get_image():
+#     global LAST_IMAGE_PATH
+#     image_path = check_email_for_attachment()  # Refresh the latest image
+
+#     if image_path and os.path.exists(image_path):
+#         if request.method == 'HEAD':
+#             return '', 200
+#         LAST_IMAGE_PATH = image_path
+#         return send_file(LAST_IMAGE_PATH, mimetype='image/jpeg')
+#     else:
+#         return jsonify({"message": "No new images found"}), 404
+
 def get_image():
+    """Endpoint to serve the latest or cached image."""
     global LAST_IMAGE_PATH
-    image_path = check_email_for_attachment()  # Refresh the latest image
+
+    # Try fetching a new image
+    image_path = check_email_for_attachment()
 
     if image_path and os.path.exists(image_path):
         if request.method == 'HEAD':
-            return '', 200
-        LAST_IMAGE_PATH = image_path
+            return '', 200  # HEAD request returns 200 OK without a body
+        return send_file(image_path, mimetype='image/jpeg')
+    elif LAST_IMAGE_PATH and os.path.exists(LAST_IMAGE_PATH):
+        # Serve the last cached image if no new image found
         return send_file(LAST_IMAGE_PATH, mimetype='image/jpeg')
     else:
-        return jsonify({"message": "No new images found"}), 404
+        return jsonify({"message": "No images available"}), 404
 
 
 if __name__ == "__main__":
