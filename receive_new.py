@@ -1,37 +1,37 @@
-import os
-import imaplib
-import email
-from flask import Flask, jsonify, send_file, request
-from flask_cors import CORS
+# import os
+# import imaplib
+# import email
+# from flask import Flask, jsonify, send_file, request
+# from flask_cors import CORS
 
-# Initialize Flask app
-app = Flask(__name__)
-CORS(app)
+# # Initialize Flask app
+# app = Flask(__name__)
+# CORS(app)
 
-# IMAP configuration (use environment variables for deployment)
-IMAP_SERVER = 'imap.gmail.com'
-IMAP_PORT = 993
-EMAIL = os.getenv("EMAIL")  # Email address
-PASSWORD = os.getenv("PASSWORD")  # Email password
+# # IMAP configuration (use environment variables for deployment)
+# IMAP_SERVER = 'imap.gmail.com'
+# IMAP_PORT = 993
+# EMAIL = os.getenv("EMAIL")  # Email address
+# PASSWORD = os.getenv("PASSWORD")  # Email password
 
-# Directory to save images (on the Render server)
-SAVE_DIR = "/tmp/generated_image"  # Use /tmp for ephemeral storage on Render
-if not os.path.exists(SAVE_DIR):
-    os.makedirs(SAVE_DIR)
+# # Directory to save images (on the Render server)
+# SAVE_DIR = "/tmp/generated_image"  # Use /tmp for ephemeral storage on Render
+# if not os.path.exists(SAVE_DIR):
+#     os.makedirs(SAVE_DIR)
 
-# Global variable to cache the last image path
-LAST_IMAGE_PATH = None
+# # Global variable to cache the last image path
+# LAST_IMAGE_PATH = None
 
-def delete_old_images():
-    """Delete all old images in the directory."""
-    try:
-        for filename in os.listdir(SAVE_DIR):
-            file_path = os.path.join(SAVE_DIR, filename)
-            if os.path.isfile(file_path) and file_path.endswith(('.png', '.jpg', '.jpeg')):
-                os.remove(file_path)
-                print(f"Removed old image: {file_path}")
-    except Exception as e:
-        print(f"Error during cleanup: {e}")
+# def delete_old_images():
+#     """Delete all old images in the directory."""
+#     try:
+#         for filename in os.listdir(SAVE_DIR):
+#             file_path = os.path.join(SAVE_DIR, filename)
+#             if os.path.isfile(file_path) and file_path.endswith(('.png', '.jpg', '.jpeg')):
+#                 os.remove(file_path)
+#                 print(f"Removed old image: {file_path}")
+#     except Exception as e:
+#         print(f"Error during cleanup: {e}")
 
 # def check_email_for_attachment():
 #     """Check for new emails and save attachments."""
@@ -165,8 +165,10 @@ CORS(app)
 
 IMAP_SERVER = 'imap.gmail.com'
 IMAP_PORT = 993
-EMAIL = os.getenv("EMAIL")  # Email address
-PASSWORD = os.getenv("PASSWORD")  # Email password
+# EMAIL = os.getenv("EMAIL")  # Email address
+# PASSWORD = os.getenv("PASSWORD")  # Email password
+EMAIL = "sendermail432@gmail.com"
+PASSWORD = "wlgy xizw duca zphi"
 
 SAVE_DIR = "/tmp/generated_image"
 if not os.path.exists(SAVE_DIR):
@@ -276,4 +278,3 @@ def get_image():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
