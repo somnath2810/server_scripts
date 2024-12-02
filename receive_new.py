@@ -90,18 +90,13 @@ def delete_old_images():
 #     return image_path
 
 
-def check_email_for_attachment():
-    image_path = None
+def check_email_for_description():
+    description = None
     with imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT) as mail:
         mail.login(EMAIL, PASSWORD)
         mail.select("inbox")
-
-        status, messages = mail.search(None, 'UNSEEN')  # Get unseen emails
+        status, messages = mail.search(None, 'UNSEEN')
         messages = messages[0].split(b' ')
-
-        if not messages or messages == [b'']:
-            print("No new emails.")
-            return None
 
         for mail_id in messages:
             if mail_id:
@@ -109,40 +104,25 @@ def check_email_for_attachment():
                 for response_part in msg_data:
                     if isinstance(response_part, tuple):
                         msg = email.message_from_bytes(response_part[1])
+                        subject, encoding = decode_header(msg["Subject"])[0]
+                        if isinstance(subject, bytes):
+                            subject = subject.decode(encoding)
+                        from_ = msg.get("From")
 
                         if msg.is_multipart():
                             for part in msg.walk():
                                 content_type = part.get_content_type()
-                                content_disposition = str(part.get("Content-Disposition"))
-
-                                if "attachment" in content_disposition and "image" in content_type:
-                                    filename = part.get_filename()
-                                    if filename:
-                                        # Delete old image before saving the new one
-                                        delete_old_images()
-
-                                        image_path = os.path.join(SAVE_DIR, filename)
-                                        with open(image_path, "wb") as f:
-                                            f.write(part.get_payload(decode=True))
+                                if content_type == "text/plain":
+                                    description = part.get_payload(decode=True).decode()
 
                         else:
-                            content_type = msg.get_content_type()
-                            if "image" in content_type:
-                                filename = "generated_image.jpg"
-                                image_path = os.path.join(SAVE_DIR, filename)
-
-                                # Delete old image before saving the new one
-                                delete_old_images()
-
-                                with open(image_path, "wb") as f:
-                                    f.write(msg.get_payload(decode=True))
+                            if msg.get_content_type() == "text/plain":
+                                description = msg.get_payload(decode=True).decode()
 
                 mail.store(mail_id, '+FLAGS', '\\Seen')  # Mark as read
                 break  # Process only the first unseen email
 
-    print("Image saved at:", image_path)
-    return image_path
-
+    return description
 
 
 @app.route('/', methods=['GET'])
