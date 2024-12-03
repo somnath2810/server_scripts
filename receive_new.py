@@ -274,7 +274,10 @@ def get_image():
         return send_file(LAST_IMAGE_PATH, mimetype='image/jpeg')
     elif LAST_IMAGE_PATH and os.path.exists(LAST_IMAGE_PATH):
     # Serve the last cached image if no new image found
+        if request.method == 'HEAD':
+            return '', 200
         return send_file(LAST_IMAGE_PATH, mimetype='image/jpeg')
+        # return send_file(LAST_IMAGE_PATH, mimetype='image/jpeg')
     else:
         return jsonify({"message": "No new images found"}), 404
 
