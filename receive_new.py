@@ -262,6 +262,22 @@ def home():
     return jsonify({"message": "Flask app is running"}), 200
 
 
+@app.route('/get-description', methods=['GET'])
+def get_description():
+    description = check_email_for_description()
+    # print("DESC: ", description)
+    # if description:
+    #     return jsonify({"description": description})
+    # else:
+    #     return jsonify({"description": ""})
+    if description:
+        if request.method == 'HEAD':
+            return '', 200
+        return jsonify({"description": description})
+    else:
+        return jsonify({"message": "No new images found"}), 404
+
+
 @app.route('/get-image', methods=['GET', 'HEAD'])
 def get_image():
     global LAST_IMAGE_PATH
