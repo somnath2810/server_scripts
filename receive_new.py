@@ -273,9 +273,9 @@ def get_description():
     # else:
     #     return jsonify({"description": ""})
     if description:
+        LAST_DESCRIPTION = description
         if request.method == 'HEAD':
             return '', 200
-            LAST_DESCRIPTION = description
         return jsonify({"description": description})
     elif LAST_DESCRIPTION:
         if request.method == 'HEAD':
