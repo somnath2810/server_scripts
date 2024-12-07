@@ -175,6 +175,7 @@ if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
 LAST_IMAGE_PATH = None
+LAST_DESCRIPTION = None
 
 
 def check_email_for_description():
@@ -264,6 +265,7 @@ def home():
 
 @app.route('/get-description', methods=['GET'])
 def get_description():
+    global LAST_DESCRIPTION
     description = check_email_for_description()
     # print("DESC: ", description)
     # if description:
@@ -273,7 +275,12 @@ def get_description():
     if description:
         if request.method == 'HEAD':
             return '', 200
+            LAST_DESCRIPTION = description
         return jsonify({"description": description})
+    elif LAST_DESCRIPTION:
+        if request.method == 'HEAD':
+            return '', 200
+        return jsonify({"description": LAST_DESCRIPTION})
     else:
         return jsonify({"message": "No new images found"}), 404
 
